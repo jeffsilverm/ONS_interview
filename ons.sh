@@ -23,10 +23,44 @@
 # partially created files will be removed and any filesystems mounted during
 # execution will be safely unmounted.
 
+# bash is a terrible language for implementing such a complicated problem, it
+# would be much simpler in perl or python
+
 # This script has the following functions:
 # sep_partno  - splits the .bz2 filename into a part number and a date.
-# make squashfs - makes a squashfs file
-# 
+# make_squashfs - makes a squashfs file.  Saves an existing squash file
+#
+LOGFILE="~/ons_logfile.txt"
+
+function make_squashfs() {
+# This function creates a new squashfs file, install.squashfs.  If a squashfs
+# file already exists then rename it to install_squashfs.bkup_NUM
+if [ -e install.squashfs ]; then
+  if [ -e install.squashfs.bkup* ]; then
+# We have to pick the latest numbered backup file.  I make the simplifying
+# assumption that the chronologically last file is also the lexigraphically
+# last file.  The -r switch to sed tells it to use extended regular expressions.
+# I have to use sed to convert multiple spaces to single tab characters for cut
+    lastfile=(ls -1 -ort | tail -1 | sed -r 's/ +/\t/g' | cut -f 8)
+    echo "last install.squashfs.bkup file is $lastfile">> $LOGFILE
+# pickup the number by spliting the filename on the _ delimiter
+    arr=$($(echo $lastline | tr "_" "\n")
+# From https://www.silviogutierrez.com/blog/getting-last-element-bash-array/
+    LENGTH=${#arr[@]} # Get the length.                                          
+    LAST_POSITION=$((LENGTH - 1)) # Subtract 1 from the length.                   
+    number=${arr[${LAST_POSITION}]} # Get the last position.
+    new_number=$((number+1))
+    echo "Moving install.squashfs.bkup to install.squashfs.bkup_$new_number" \
+		 >> $LOGFILE
+     
+
+  else
+# no backup file exists, but a copy of install.squashfs exists, so rename it.
+# The requirements do not say how many copies of the backup file might exist,
+# hopefully 10000 will be enough.
+    mv install.squashfs.bkup_0001
+
+
 
 for tar_file in /INSTALL/*.bz2; do
   partno=$(sep_partno tar_file)
