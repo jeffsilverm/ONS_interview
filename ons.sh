@@ -42,7 +42,7 @@ if [ -e install.squashfs ]; then
 # last file.  The -r switch to sed tells it to use extended regular expressions.
 # I have to use sed to convert multiple spaces to single tab characters for cut
     lastfile=(ls -1 -ort | tail -1 | sed -r 's/ +/\t/g' | cut -f 8)
-    echo "last install.squashfs.bkup file is $lastfile">> $LOGFILE
+    echo "last install.squashfs.bkup file is ${lastfile}">> $LOGFILE
 # pickup the number by spliting the filename on the _ delimiter
     arr=$($(echo $lastline | tr "_" "\n")
 # From https://www.silviogutierrez.com/blog/getting-last-element-bash-array/
@@ -50,19 +50,39 @@ if [ -e install.squashfs ]; then
     LAST_POSITION=$((LENGTH - 1)) # Subtract 1 from the length.                   
     number=${arr[${LAST_POSITION}]} # Get the last position.
     new_number=$((number+1))
-    echo "Moving install.squashfs.bkup to install.squashfs.bkup_$new_number" \
+    echo "Moving install.squashfs.bkup to install.squashfs.bkup_${new_number}" \
 		 >> $LOGFILE
-     
-
+    mv install.squashfs.bkup install.squashfs.bkup_${new_number}
   else
 # no backup file exists, but a copy of install.squashfs exists, so rename it.
 # The requirements do not say how many copies of the backup file might exist,
-# hopefully 10000 will be enough.
-    mv install.squashfs.bkup_0001
+# hopefully 10000 will be enough.  TODO - put in code that throws an error if
+# this assumption is wrong
+    mv install.squashfs.bkup install.squashfs.bkup_0001
+else
+  echo "No install.squashfs exists" >> $LOGFILE
+fi
+}
 
+function sep_partno() {
+# This function, when given a string of the form
+# abcd-efgh-gijk-yyyymmddHHMMSS.tar.bz2
+# The partno is the abcd-efgh-gijk part.  There will be zero to many -.
+# Implementation detail: the last (rightmost) hyphen always separates the date
+# from the partno.
+  string=$1
+  arr=$($(echo $string | tr "-" "\n")
+  LENGTH=${#arr[@]} # Get the length.                                          
+  LAST_POSITION=$((LENGTH - 1)) # Subtract 1 from the length.                   
+  date_stamp=${arr[${LAST_POSITION}]} # Get the date stamp
+  echo "The date_stamp of ${string} is ${date_stamp}" >> $LOGFILE
+
+  
+
+}
 
 
 for tar_file in /INSTALL/*.bz2; do
-  partno=$(sep_partno tar_file)
+  partno=$(sep_partno tar_file $tar_file)
   
 
